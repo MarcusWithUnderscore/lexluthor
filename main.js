@@ -11,6 +11,7 @@ import path from 'path';
 import axios from 'axios';
 import express from 'express';
 import { handleUtility, utilityCommands } from './commands/utility.js';
+import { sendMenu } from './commands/menu.js';
 
 
 
@@ -214,6 +215,10 @@ async function startBot() {
                     await sock.sendMessage(from, {
                         text: `✅ *${BOT_NAME} v${BOT_VERSION}*\n\n> Running 24/7\n> Prefix: ${PREFIX}\n> Owner: ${OWNER_NUMBER}`
                     }, { quoted: msg });
+                    break;
+                case 'menu':
+                case 'help':
+                    await sendMenu(sock, from, msg);
                     break;
                 default:
                       if (utilityCommands.includes(command)) {
