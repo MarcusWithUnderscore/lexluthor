@@ -165,7 +165,7 @@ async function startBot() {
     
         for (const msg of messages) {
             if (!msg.message) continue;
-            if (msg.key.fromMe) continue;
+           // if (msg.key.fromMe) continue;
     
             const from = msg.key.remoteJid;
     
@@ -177,13 +177,14 @@ async function startBot() {
     
             const isGroup = from.endsWith('@g.us');
             const isChannel = from.endsWith('@newsletter');
-    
+            const realJid = msg.key.remoteJidAlt || msg.key.remoteJid;
+
             const senderNumber = isGroup
                 ? msg.key.participant?.split('@')[0].split(':')[0]
-                : from.split('@')[0].split(':')[0];
-    
+                : realJid.split('@')[0].split(':')[0];
+            
+            const isOwner = msg.key.fromMe || senderNumber === OWNER_NUMBER;
             const senderName = msg.pushName || 'Unknown';
-            const isOwner = senderNumber === OWNER_NUMBER;
             const body =
                 msg.message?.conversation ||
                 msg.message?.extendedTextMessage?.text ||
