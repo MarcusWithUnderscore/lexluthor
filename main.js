@@ -8,6 +8,43 @@ import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import express from 'express';
+
+const api = express();
+const API_PORT = process.env.API_PORT || 3001;
+api.use(express.json());
+
+// Status
+api.get('/status', (req, res) => {
+    res.json({
+        bot: BOT_NAME,
+        version: BOT_VERSION,
+        status: sock?.user ? 'connected' : 'disconnected',
+        number: sock?.user?.id?.split(':')[0] || null,
+        uptime: process.uptime()
+    });
+});
+
+// Send message
+api.post('/send', async (req, res) => {
+    try {
+        const { jid, message } = req.body;
+        if (!jid || !message) return res.status(400).json({ error: 'jid and message required' });
+        await sock.sendMessage(jid, { text: message });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Restart bot
+api.post('/restart', async (req, res) => {
+    res.json({ success: true, message: 'Restarting...' });
+    if (fs.existsSync(AUTH_DIR)) fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+    isFirstConnect = true;
+    setTimeout(() => startBot(), 2000);
+});
+
 
 const logger = pino({ level: 'silent' });
 const AUTH_DIR = `./bot_session/${SESSION_ID}`;
@@ -184,4 +221,8 @@ process.on('uncaughtException', (err) => console.error('💥 Uncaught Exception:
 process.on('unhandledRejection', (err) => console.error('💥 Unhandled Rejection:', err?.message || err));
 
 console.log(`🚀 Starting ${BOT_NAME} v${BOT_VERSION}...`);
-startBot();
+api.listen(API_PORT, () =>{ 
+    console.log(`🌐 Bot API running on port ${API_PORT}`);
+    startBot();
+
+});
